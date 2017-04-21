@@ -18,7 +18,7 @@ public class HomeDummyController {
     @ResponseBody
     public void datas()
     {
-        System.out.println(" SosoPartner Server is running. Request type GET.");
+        System.out.println(" Soso Common data Server is running. Request type GET.");
     }
 
 
