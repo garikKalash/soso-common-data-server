@@ -10,13 +10,15 @@ public class Service {
 
     private String serviceName_eng;
 
+    private String imgpath;
 
     public Service(){}
 
-    public Service(Integer id, String serviceName_arm, String serviceName_eng) {
+    public Service(Integer id, String serviceName_arm, String serviceName_eng,String imgpath) {
         this.id = id;
         this.serviceName_arm = serviceName_arm;
         this.serviceName_eng = serviceName_eng;
+        this.imgpath = imgpath;
     }
 
 
@@ -42,5 +44,13 @@ public class Service {
 
     public void setServiceName_eng(String serviceName_eng) {
         this.serviceName_eng = serviceName_eng;
+    }
+
+    public String getImgpath() {
+        return imgpath;
+    }
+
+    public void setImgpath(String imgpath) {
+        this.imgpath = imgpath;
     }
 }
