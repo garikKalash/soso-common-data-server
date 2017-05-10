@@ -17,6 +17,13 @@
 		<version>1.5.2.RELEASE</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
+	<!-- https://mvnrepository.com/artifact/postgresql/postgresql -->
+	<dependency>
+		<groupId>postgresql</groupId>
+		<artifactId>postgresql</artifactId>
+		<version>9.1-901.jdbc4</version>
+	</dependency>
+
 
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>

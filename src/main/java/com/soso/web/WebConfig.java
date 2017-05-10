@@ -22,8 +22,7 @@ public class WebConfig
     public DataSource dataSource() {
         DriverManagerDataSource ds = new DriverManagerDataSource();
         ds.setDriverClassName("org.postgresql.Driver");
-        ds.setUrl("jdbc:postgresql://ec2-79-125-2-69.eu-west-1.compute.amazonaws.com:5432/d5hactgbkc8b7g?sslmode=require&ssl=true&sslfactory=org.postgresql.ssl.NonValidatingFactory");
-        ds.setUsername("syngcfcvrdxvjf");
+        ds.setUrl("jdbc:postgresql://ec2-79-125-2-69.eu-west-1.compute.amazonaws.com:5432/d5hactgbkc8b7g");
         ds.setPassword("8333e72219c36b1597c4a30f4e8ce952ee175a115aac6ad436fa8345a677193e");
         return ds;
     }
