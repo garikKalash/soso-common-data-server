@@ -9,7 +9,7 @@
 	<packaging>jar</packaging>
 
 	<name>common-data-service</name>
-	<description>Demo project for Spring Boot</description>
+	<description>Common data project for Spring Boot</description>
 
 	<parent>
 		<groupId>org.springframework.boot</groupId>
@@ -22,6 +22,8 @@
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<start-class>org.roshan.Application</start-class>
 	</properties>
 

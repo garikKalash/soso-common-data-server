@@ -27,17 +27,20 @@ import java.util.List;
 public class CommonDataController {
 
     @Autowired
-    private CommonDataService commonDataService;
+    private final CommonDataService commonDataService;
 
-    @RequestMapping(value = "/getSosoServices/{parentId}", method = RequestMethod.GET, produces = {MediaType.APPLICATION_JSON_VALUE, "text/plain;charset=UTF-8"})
-    public void getServices(@PathVariable("parentId") Integer parentId, HttpServletResponse response) throws IOException {
+    @Autowired
+    public CommonDataController(CommonDataService commonDataService){
+        this.commonDataService = commonDataService;
+    }
+
+    @RequestMapping(value = "/getSosoServices/{parentId}", method = RequestMethod.GET, produces = {MediaType.APPLICATION_JSON_UTF8_VALUE})
+    public @ResponseBody void getServices(@PathVariable("parentId") Integer parentId, HttpServletResponse response) throws IOException {
         response.setCharacterEncoding("UTF-8");
-
         List<Service> sosoServicesList = commonDataService.getServicesByParentId(parentId);
         String servicesListJsonString = JsonConverter.toJson(new JsonMapBuilder()
                 .add("sosoServices", sosoServicesList)
                 .build());
-
         response.getWriter().write(servicesListJsonString);
     }
 

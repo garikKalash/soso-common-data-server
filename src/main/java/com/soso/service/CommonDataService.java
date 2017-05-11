@@ -4,6 +4,7 @@ import com.soso.models.CountryPhoneModel;
 import com.soso.models.Service;
 import com.soso.persistance.CommonDataDAO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -12,11 +13,15 @@ import java.util.List;
  * Created by Garik Kalashyan on 3/8/2017.
  */
 @Repository
-public class CommonDataService {
+public class CommonDataService extends BaseRestClient{
 
     @Autowired
     private CommonDataDAO commonDataDAO;
 
+    @Autowired
+    public CommonDataService(@Value("${service.id}") Integer defaultId){
+        super(defaultId);
+    }
 
     public List<Service> getServicesByParentId(Integer parentId) {
         return commonDataDAO.getServicesByParent(parentId);
