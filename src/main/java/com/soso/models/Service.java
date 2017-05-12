@@ -12,13 +12,16 @@ public class Service {
 
     private String imgpath;
 
+    private Integer parentid;
+
     public Service(){}
 
-    public Service(Integer id, String serviceName_arm, String serviceName_eng,String imgpath) {
+    public Service(Integer id, String serviceName_arm, String serviceName_eng,String imgpath,Integer parentid) {
         this.id = id;
         this.serviceName_arm = serviceName_arm;
         this.serviceName_eng = serviceName_eng;
         this.imgpath = imgpath;
+        this.parentid = parentid;
     }
 
 
@@ -28,6 +31,14 @@ public class Service {
 
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public Integer getParentid() {
+        return parentid;
+    }
+
+    public void setParentid(Integer parentid) {
+        this.parentid = parentid;
     }
 
     public String getServiceName_arm() {

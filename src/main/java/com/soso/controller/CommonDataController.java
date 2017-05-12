@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletResponse;
@@ -25,17 +27,21 @@ import java.util.List;
 @Controller
 @RequestMapping("commonData")
 public class CommonDataController {
+    private static final String RELATIVE_PATH_FOR_UPLOADS = "\\work\\soso-common-data-service-uploads\\";
+
 
     @Autowired
     private final CommonDataService commonDataService;
 
     @Autowired
-    public CommonDataController(CommonDataService commonDataService){
+    public CommonDataController(CommonDataService commonDataService) {
         this.commonDataService = commonDataService;
     }
 
     @RequestMapping(value = "/getSosoServices/{parentId}", method = RequestMethod.GET, produces = {MediaType.APPLICATION_JSON_UTF8_VALUE})
-    public @ResponseBody void getServices(@PathVariable("parentId") Integer parentId, HttpServletResponse response) throws IOException {
+    public
+    @ResponseBody
+    void getServices(@PathVariable("parentId") Integer parentId, HttpServletResponse response) throws IOException {
         response.setCharacterEncoding("UTF-8");
         List<Service> sosoServicesList = commonDataService.getServicesByParentId(parentId);
         String servicesListJsonString = JsonConverter.toJson(new JsonMapBuilder()
@@ -43,6 +49,20 @@ public class CommonDataController {
                 .build());
         response.getWriter().write(servicesListJsonString);
     }
+
+
+    @RequestMapping(value = "/appsososervices", method = RequestMethod.GET, produces = {MediaType.APPLICATION_JSON_UTF8_VALUE})
+    public
+    @ResponseBody
+    void getServices(HttpServletResponse response) throws IOException {
+        response.setCharacterEncoding("UTF-8");
+        List<Service> sosoServicesList = commonDataService.getServices();
+        String servicesListJsonString = JsonConverter.toJson(new JsonMapBuilder()
+                .add("sosoServices", sosoServicesList)
+                .build());
+        response.getWriter().write(servicesListJsonString);
+    }
+
 
     @RequestMapping(value = "/deleteSosoServices/{serviceId}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
     public void deleteServiceById(@PathVariable("serviceId") Integer serviceId, HttpServletResponse response) throws IOException {
@@ -82,6 +102,12 @@ public class CommonDataController {
         IOUtils.copy(getImageInputStreamByImgPath(imgPath), response.getOutputStream());
     }
 
+    @RequestMapping(value = "/service/{serviceId}", method = RequestMethod.GET)
+    public void getServiceById(@PathVariable(value = "serviceId") Integer serviceId, HttpServletResponse response) throws IOException {
+        Service service = commonDataService.getServiceById(serviceId);
+        response.getWriter().write(JsonConverter.toJson(service));
+    }
+
     @RequestMapping(value = "/commonphoto/{id}", method = RequestMethod.GET)
     public void getCommonPhotoById(@PathVariable(value = "id") Integer id, HttpServletResponse response) throws IOException {
         String imgPath = commonDataService.getImgPathWithId(id);
@@ -91,12 +117,39 @@ public class CommonDataController {
         IOUtils.copy(getImageInputStreamByImgPath(imgPath), response.getOutputStream());
     }
 
+    @RequestMapping(value = "/uploadserviceimage", method = RequestMethod.POST, consumes = {"multipart/mixed", "multipart/form-data"})
+    public String uploadAccountImage(@RequestParam("file") MultipartFile file, @RequestParam("id") Integer serviceId,
+                                     RedirectAttributes redirectAttributes) throws IOException {
+
+        Service service = commonDataService.getServiceById(serviceId);
+        File directory = new File(getBasePathOfResources() + RELATIVE_PATH_FOR_UPLOADS);
+        String newLogoPath = null;
+        if (directory.exists() && directory.isDirectory()) {
+            newLogoPath = getBasePathOfResources() + RELATIVE_PATH_FOR_UPLOADS + file.getOriginalFilename();
+        } else if (directory.mkdirs()) {
+            newLogoPath = directory.getPath() + "\\" + file.getOriginalFilename();
+        }
+        if (newLogoPath != null) {
+            if (service.getImgpath() != null) {
+                commonDataService.deleteServiceOldLogoFromFiles(service.getImgpath());
+            }
+            commonDataService.updateLogoOfService(serviceId, newLogoPath);
+            file.transferTo(new File(newLogoPath));
+            redirectAttributes.addFlashAttribute("Your account image is changed successfully!");
+        }
+        return "redirect:/";
+    }
+
 
     private InputStream getImageInputStreamByImgPath(String imagePath) throws IOException {
         BufferedImage image = ImageIO.read(new File(imagePath));
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         ImageIO.write(image, "jpg", os);
         return new ByteArrayInputStream(os.toByteArray());
+    }
+
+    private String getBasePathOfResources() {
+        return new File(".").getAbsoluteFile().getParentFile().getParentFile().getPath();
     }
 
 

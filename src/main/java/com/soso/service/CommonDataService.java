@@ -7,19 +7,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
+import java.io.File;
 import java.util.List;
 
 /**
  * Created by Garik Kalashyan on 3/8/2017.
  */
 @Repository
-public class CommonDataService extends BaseRestClient{
+public class CommonDataService extends BaseRestClient {
 
     @Autowired
     private CommonDataDAO commonDataDAO;
 
     @Autowired
-    public CommonDataService(@Value("${service.id}") Integer defaultId){
+    public CommonDataService(@Value("${service.id}") Integer defaultId) {
         super(defaultId);
     }
 
@@ -27,9 +28,13 @@ public class CommonDataService extends BaseRestClient{
         return commonDataDAO.getServicesByParent(parentId);
     }
 
+    public List<Service> getServices(){
+        return commonDataDAO.getServices();
+    }
+
     public void deleteSosoService(Integer serviceId) {
         commonDataDAO.deleteService(serviceId);
-        ;
+
     }
 
     public Integer createSosoService(Service service) {
@@ -46,8 +51,20 @@ public class CommonDataService extends BaseRestClient{
     }
 
     public String getImgPathWithId(Integer serviceId) {
-
         return commonDataDAO.getImgPathWithId(serviceId);
+    }
+
+    public Service getServiceById(Integer serviceId) {
+        return commonDataDAO.getServiceById(serviceId);
+    }
+
+    public boolean deleteServiceOldLogoFromFiles(String oldLogoPath) {
+        return new File(oldLogoPath).delete();
+    }
+
+    public void updateLogoOfService(Integer serviceId, String path) {
+        commonDataDAO.updateLogoOfService(serviceId, path);
+
     }
 
 
