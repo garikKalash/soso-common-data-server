@@ -1,6 +1,7 @@
 package com.soso.service;
 
 import com.soso.models.ServiceInfo;
+import com.soso.web.AppModeResolver;
 import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.PostConstruct;
@@ -38,7 +39,7 @@ public class BaseRestClient {
 
 
     private class ServicesDetailService {
-        private String baseServicesDetailServiceUrl = "https://pure-badlands-72083.herokuapp.com/";
+        private String baseServicesDetailServiceUrl = new AppModeResolver().isLocalMode() ? "http://localhost:9011" : "https://pure-badlands-72083.herokuapp.com/";
 
         private String getInfoByServiceId(Integer serviceId){
             return restTemplate.getForObject(baseServicesDetailServiceUrl + "serviceDetails/" + serviceId,String.class);

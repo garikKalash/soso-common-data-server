@@ -99,7 +99,9 @@ public class CommonDataController {
         String imgPath = commonDataService.getImgPathOfService(serviceId);
         response.setContentType(MediaType.IMAGE_JPEG_VALUE);
         response.setContentType(MediaType.IMAGE_PNG_VALUE);
-        IOUtils.copy(getImageInputStreamByImgPath(imgPath), response.getOutputStream());
+        if (getImageInputStreamByImgPath(imgPath) != null) {
+            IOUtils.copy(getImageInputStreamByImgPath(imgPath), response.getOutputStream());
+        }
     }
 
     @RequestMapping(value = "/service/{serviceId}", method = RequestMethod.GET)
@@ -118,8 +120,7 @@ public class CommonDataController {
     }
 
     @RequestMapping(value = "/uploadserviceimage", method = RequestMethod.POST, consumes = {"multipart/mixed", "multipart/form-data"})
-    public String uploadAccountImage(@RequestParam("file") MultipartFile file, @RequestParam("id") Integer serviceId,
-                                     RedirectAttributes redirectAttributes) throws IOException {
+    public String uploadAccountImage(@RequestParam("file") MultipartFile file, RedirectAttributes redirectAttributes, @RequestParam("id") Integer serviceId) throws IOException {
 
         Service service = commonDataService.getServiceById(serviceId);
         File directory = new File(getBasePathOfResources() + RELATIVE_PATH_FOR_UPLOADS);
@@ -138,18 +139,22 @@ public class CommonDataController {
             redirectAttributes.addFlashAttribute("Your account image is changed successfully!");
         }
         return "redirect:/";
+
     }
 
 
     private InputStream getImageInputStreamByImgPath(String imagePath) throws IOException {
-        BufferedImage image = ImageIO.read(new File(imagePath));
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        ImageIO.write(image, "jpg", os);
-        return new ByteArrayInputStream(os.toByteArray());
+        if (imagePath != null) {
+            BufferedImage image = ImageIO.read(new File(imagePath));
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            ImageIO.write(image, "jpg", os);
+            return new ByteArrayInputStream(os.toByteArray());
+        }
+        return null;
     }
 
     private String getBasePathOfResources() {
-        return new File(".").getAbsoluteFile().getParentFile().getParentFile().getPath();
+        return new File(".").getAbsoluteFile().getParentFile().getPath();
     }
 
 

@@ -30,9 +30,10 @@ public class CommonDataDAO {
     }
 
     public Integer createService(Service item) {
-        String createUserQuery = "SELECT addservice ( :_servicename_arm, :_servicename_eng)";
+        String createUserQuery = "SELECT addservice ( :_servicename_arm, :_parentid ,:_servicename_eng)";
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("_servicename_arm", item.getServiceName_arm());
+        paramMap.put("_parentid",item.getParentid());
         paramMap.put("_servicename_eng", item.getServiceName_eng());
         return getNamedParameterJdbcOperations().queryForObject(createUserQuery, paramMap, Integer.class);
     }

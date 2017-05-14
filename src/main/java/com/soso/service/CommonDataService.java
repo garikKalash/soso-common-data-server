@@ -28,12 +28,16 @@ public class CommonDataService extends BaseRestClient {
         return commonDataDAO.getServicesByParent(parentId);
     }
 
-    public List<Service> getServices(){
+    public List<Service> getServices() {
         return commonDataDAO.getServices();
     }
 
     public void deleteSosoService(Integer serviceId) {
+        Service service = commonDataDAO.getServiceById(serviceId);
         commonDataDAO.deleteService(serviceId);
+        if (service.getImgpath() != null) {
+            deleteServiceOldLogoFromFiles(service.getImgpath());
+        }
 
     }
 
