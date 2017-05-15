@@ -18,7 +18,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * Created by Garik Kalashyan on 3/4/2017.
@@ -29,7 +28,7 @@ import java.util.logging.Logger;
 @RequestMapping("commonData")
 public class CommonDataController {
 
-    private static final String RELATIVE_PATH_FOR_UPLOADS = File.separatorChar  + "work" + File.separatorChar  + "soso-common-data-service-uploads" + File.separatorChar ;
+    private static final String RELATIVE_PATH_FOR_UPLOADS = File.separatorChar + "work" + File.separatorChar + "soso-common-data-service-uploads" + File.separatorChar;
 
 
     @Autowired
@@ -125,14 +124,14 @@ public class CommonDataController {
     public String uploadAccountImage(@RequestParam("file") MultipartFile file, RedirectAttributes redirectAttributes, @RequestParam("id") Integer serviceId) throws IOException {
 
         Service service = commonDataService.getServiceById(serviceId);
-        System.out.println("***** --> Initializing file with name " + getBasePathOfResources()+ RELATIVE_PATH_FOR_UPLOADS +" <--  *****");
+        System.out.println("***** --> Initializing file with name " + getBasePathOfResources() + RELATIVE_PATH_FOR_UPLOADS + " <--  *****");
         File directory = new File(getBasePathOfResources() + RELATIVE_PATH_FOR_UPLOADS);
         String newLogoPath = null;
         if (directory.exists() && directory.isDirectory()) {
-            System.out.println("***** --> Directory is existed " + getBasePathOfResources()+ RELATIVE_PATH_FOR_UPLOADS +" <--  *****");
+            System.out.println("***** --> Directory is existed " + getBasePathOfResources() + RELATIVE_PATH_FOR_UPLOADS + " <--  *****");
             newLogoPath = RELATIVE_PATH_FOR_UPLOADS + file.getOriginalFilename();
         } else if (directory.mkdirs()) {
-            System.out.println("***** --> Creating file with name " + getBasePathOfResources()+ RELATIVE_PATH_FOR_UPLOADS +" <--  *****");
+            System.out.println("***** --> Creating file with name " + getBasePathOfResources() + RELATIVE_PATH_FOR_UPLOADS + " <--  *****");
             newLogoPath = RELATIVE_PATH_FOR_UPLOADS + file.getOriginalFilename();
         }
         if (newLogoPath != null) {
@@ -140,21 +139,31 @@ public class CommonDataController {
                 commonDataService.deleteServiceOldLogoFromFiles(service.getImgpath());
             }
             commonDataService.updateLogoOfService(serviceId, newLogoPath);
-            System.out.println("***** --> Transfering file with name " + newLogoPath +" <--  *****");
+            System.out.println("***** --> Transfering file with name " + newLogoPath + " <--  *****");
             file.transferTo(new File(getBasePathOfResources() + newLogoPath));
             redirectAttributes.addFlashAttribute("Your account image is changed successfully!");
+        } else {
+            System.out.println("***** --> New Logo is not created in" + getBasePathOfResources() + RELATIVE_PATH_FOR_UPLOADS + " <--  *****");
+
         }
         return "redirect:/";
 
     }
 
 
-    private InputStream getImageInputStreamByImgPath(String imagePath) throws IOException {
-
-        BufferedImage image = ImageIO.read(new File(imagePath));
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        ImageIO.write(image, "jpg", os);
-        return new ByteArrayInputStream(os.toByteArray());
+    private InputStream getImageInputStreamByImgPath(String imagePath) {
+        BufferedImage image = null;
+        try {
+            image = ImageIO.read(new File(imagePath));
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            ImageIO.write(image, "jpg", os);
+            return new ByteArrayInputStream(os.toByteArray());
+        } catch (IOException e) {
+            IOException ex = new IOException("There is problem with reading file"+ imagePath);
+            ex.initCause(e);
+            ex.printStackTrace();
+        }
+        return null;
 
     }
 
