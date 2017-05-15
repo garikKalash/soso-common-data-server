@@ -28,7 +28,8 @@ import java.util.logging.Logger;
 @Controller
 @RequestMapping("commonData")
 public class CommonDataController {
-    private static final String RELATIVE_PATH_FOR_UPLOADS = "\\work\\soso-common-data-service-uploads\\";
+
+    private static final String RELATIVE_PATH_FOR_UPLOADS = File.separatorChar  + "work" + File.separatorChar  + "soso-common-data-service-uploads" + File.separatorChar ;
 
 
     @Autowired
