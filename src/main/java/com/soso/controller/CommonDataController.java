@@ -18,6 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Created by Garik Kalashyan on 3/4/2017.
@@ -123,11 +124,14 @@ public class CommonDataController {
     public String uploadAccountImage(@RequestParam("file") MultipartFile file, RedirectAttributes redirectAttributes, @RequestParam("id") Integer serviceId) throws IOException {
 
         Service service = commonDataService.getServiceById(serviceId);
+        System.out.println("***** --> Initializing file with name " + getBasePathOfResources()+ RELATIVE_PATH_FOR_UPLOADS +" <--  *****");
         File directory = new File(getBasePathOfResources() + RELATIVE_PATH_FOR_UPLOADS);
         String newLogoPath = null;
         if (directory.exists() && directory.isDirectory()) {
+            System.out.println("***** --> Directory is existed " + getBasePathOfResources()+ RELATIVE_PATH_FOR_UPLOADS +" <--  *****");
             newLogoPath = RELATIVE_PATH_FOR_UPLOADS + file.getOriginalFilename();
         } else if (directory.mkdirs()) {
+            System.out.println("***** --> Creating file with name " + getBasePathOfResources()+ RELATIVE_PATH_FOR_UPLOADS +" <--  *****");
             newLogoPath = RELATIVE_PATH_FOR_UPLOADS + file.getOriginalFilename();
         }
         if (newLogoPath != null) {
@@ -135,6 +139,7 @@ public class CommonDataController {
                 commonDataService.deleteServiceOldLogoFromFiles(service.getImgpath());
             }
             commonDataService.updateLogoOfService(serviceId, newLogoPath);
+            System.out.println("***** --> Transfering file with name " + newLogoPath +" <--  *****");
             file.transferTo(new File(getBasePathOfResources() + newLogoPath));
             redirectAttributes.addFlashAttribute("Your account image is changed successfully!");
         }
