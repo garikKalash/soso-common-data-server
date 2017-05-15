@@ -99,7 +99,7 @@ public class CommonDataController {
         String imgPath = commonDataService.getImgPathOfService(serviceId);
         response.setContentType(MediaType.IMAGE_JPEG_VALUE);
         response.setContentType(MediaType.IMAGE_PNG_VALUE);
-        if (getImageInputStreamByImgPath(getBasePathOfResources() + imgPath) != null) {
+        if (imgPath != null && getImageInputStreamByImgPath(getBasePathOfResources() + imgPath) != null) {
             IOUtils.copy(getImageInputStreamByImgPath(getBasePathOfResources() + imgPath), response.getOutputStream());
         }
     }
@@ -116,7 +116,7 @@ public class CommonDataController {
         response.setContentType(MediaType.IMAGE_GIF_VALUE);
         response.setContentType(MediaType.IMAGE_JPEG_VALUE);
         response.setContentType(MediaType.IMAGE_PNG_VALUE);
-        IOUtils.copy(getImageInputStreamByImgPath(imgPath), response.getOutputStream());
+        IOUtils.copy(getImageInputStreamByImgPath(getBasePathOfResources() + imgPath), response.getOutputStream());
     }
 
     @RequestMapping(value = "/uploadserviceimage", method = RequestMethod.POST, consumes = {"multipart/mixed", "multipart/form-data"})
@@ -144,15 +144,13 @@ public class CommonDataController {
 
 
     private InputStream getImageInputStreamByImgPath(String imagePath) throws IOException {
-        if (imagePath != null) {
-            BufferedImage image = ImageIO.read(new File(imagePath));
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-            ImageIO.write(image, "jpg", os);
-            return new ByteArrayInputStream(os.toByteArray());
-        }
-        return null;
-    }
 
+        BufferedImage image = ImageIO.read(new File(imagePath));
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        ImageIO.write(image, "jpg", os);
+        return new ByteArrayInputStream(os.toByteArray());
+
+    }
 
 
     private String getBasePathOfResources() {
