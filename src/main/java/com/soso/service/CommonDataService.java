@@ -36,9 +36,13 @@ public class CommonDataService extends BaseRestClient {
         Service service = commonDataDAO.getServiceById(serviceId);
         commonDataDAO.deleteService(serviceId);
         if (service.getImgpath() != null) {
-            deleteServiceOldLogoFromFiles(service.getImgpath());
+            deleteServiceOldLogoFromFiles(getBasePathOfResources() + service.getImgpath());
         }
 
+    }
+
+    private String getBasePathOfResources() {
+        return new File(".").getAbsoluteFile().getParentFile().getPath();
     }
 
     public Integer createSosoService(Service service) {

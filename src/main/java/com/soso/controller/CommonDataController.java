@@ -99,8 +99,8 @@ public class CommonDataController {
         String imgPath = commonDataService.getImgPathOfService(serviceId);
         response.setContentType(MediaType.IMAGE_JPEG_VALUE);
         response.setContentType(MediaType.IMAGE_PNG_VALUE);
-        if (getImageInputStreamByImgPath(imgPath) != null) {
-            IOUtils.copy(getImageInputStreamByImgPath(imgPath), response.getOutputStream());
+        if (getImageInputStreamByImgPath(getBasePathOfResources() + imgPath) != null) {
+            IOUtils.copy(getImageInputStreamByImgPath(getBasePathOfResources() + imgPath), response.getOutputStream());
         }
     }
 
@@ -126,16 +126,16 @@ public class CommonDataController {
         File directory = new File(getBasePathOfResources() + RELATIVE_PATH_FOR_UPLOADS);
         String newLogoPath = null;
         if (directory.exists() && directory.isDirectory()) {
-            newLogoPath = getBasePathOfResources() + RELATIVE_PATH_FOR_UPLOADS + file.getOriginalFilename();
+            newLogoPath = RELATIVE_PATH_FOR_UPLOADS + file.getOriginalFilename();
         } else if (directory.mkdirs()) {
-            newLogoPath = directory.getPath() + "\\" + file.getOriginalFilename();
+            newLogoPath = RELATIVE_PATH_FOR_UPLOADS + file.getOriginalFilename();
         }
         if (newLogoPath != null) {
             if (service.getImgpath() != null) {
                 commonDataService.deleteServiceOldLogoFromFiles(service.getImgpath());
             }
             commonDataService.updateLogoOfService(serviceId, newLogoPath);
-            file.transferTo(new File(newLogoPath));
+            file.transferTo(new File(getBasePathOfResources() + newLogoPath));
             redirectAttributes.addFlashAttribute("Your account image is changed successfully!");
         }
         return "redirect:/";
@@ -152,6 +152,8 @@ public class CommonDataController {
         }
         return null;
     }
+
+
 
     private String getBasePathOfResources() {
         return new File(".").getAbsoluteFile().getParentFile().getPath();
