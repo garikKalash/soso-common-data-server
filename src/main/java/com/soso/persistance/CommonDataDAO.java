@@ -1,6 +1,7 @@
 package com.soso.persistance;
 
 import com.soso.models.CountryPhoneModel;
+import com.soso.models.MessageDto;
 import com.soso.models.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
@@ -38,11 +39,11 @@ public class CommonDataDAO {
         return getNamedParameterJdbcOperations().queryForObject(createUserQuery, paramMap, Integer.class);
     }
 
-    public void deleteService(Integer serviceId) {
-        String createUserQuery = "SELECT deleteservice ( :_serviceId)";
+    public Integer deleteService(Integer serviceId) {
+        String deleteServiceQuery = "SELECT deleteservice ( :_serviceId)";
         Map<String, Object> paramMap = new HashMap<>();
         paramMap.put("_serviceId", serviceId);
-        getNamedParameterJdbcOperations().queryForObject(createUserQuery, paramMap, Integer.class);
+        return getNamedParameterJdbcOperations().queryForObject(deleteServiceQuery, paramMap, Integer.class);
 
     }
 
@@ -57,6 +58,33 @@ public class CommonDataDAO {
     public List<Service> getServices() {
         return getNamedParameterJdbcOperations().query("SELECT * FROM public.c_service", new BeanPropertyRowMapper<>(Service.class));
     }
+
+    public List<MessageDto> getMessages(){
+        return getNamedParameterJdbcOperations().query("SELECT * FROM public.c_messages",new BeanPropertyRowMapper<>(MessageDto.class));
+    }
+
+    public MessageDto getMessageById(Integer id){
+        Map<String,Object> paramMap = new HashMap<>();
+        paramMap.put("messageId", id);
+        return getNamedParameterJdbcOperations().queryForObject("Select * FROM public.c_messages WHERE id=:messageId",paramMap,new BeanPropertyRowMapper<>(MessageDto.class));
+    }
+
+    public Integer addMessage(MessageDto messageDto) {
+        String addMessageQuery = "SELECT addmessage ( :_eng, :_hay)";
+        Map<String, Object> paramMap = new HashMap<>();
+        paramMap.put("_eng", messageDto.getEng());
+        paramMap.put("_hay",messageDto.getHay());
+        return getNamedParameterJdbcOperations().queryForObject(addMessageQuery, paramMap, Integer.class);
+    }
+
+    public Integer deleteMessageById(Integer messageId) {
+        String deleteMessageQuery = "SELECT deletemessage ( :_messageId)";
+        Map<String, Object> paramMap = new HashMap<>();
+        paramMap.put("_messageId", messageId);
+        return getNamedParameterJdbcOperations().queryForObject(deleteMessageQuery, paramMap, Integer.class);
+
+    }
+
 
 
     public List<CountryPhoneModel> getCountryPhoneCodes() {

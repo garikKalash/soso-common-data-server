@@ -1,23 +1,36 @@
 package com.soso.controller;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.stream.JsonReader;
 import com.soso.models.CountryPhoneModel;
+import com.soso.models.MessageDto;
 import com.soso.models.Service;
 import com.soso.service.CommonDataService;
 import com.soso.service.JsonConverter;
 import com.soso.service.JsonMapBuilder;
+import com.soso.validator.MessageValidator;
+import com.soso.validator.ServiceValidator;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import sun.plugin2.message.Message;
 
+import javax.annotation.PostConstruct;
 import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletResponse;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Garik Kalashyan on 3/4/2017.
@@ -35,64 +48,60 @@ public class CommonDataController {
     private final CommonDataService commonDataService;
 
     @Autowired
+    private ServiceValidator serviceValidator;
+
+    @Autowired
+    private MessageValidator messageValidator;
+
+    @Autowired
     public CommonDataController(CommonDataService commonDataService) {
         this.commonDataService = commonDataService;
     }
 
+    @PostConstruct
+    public void init(){
+      serviceValidator.setCommonDataService(commonDataService);
+    }
+
     @RequestMapping(value = "/getSosoServices/{parentId}", method = RequestMethod.GET, produces = {MediaType.APPLICATION_JSON_UTF8_VALUE})
-    public
-    @ResponseBody
-    void getServices(@PathVariable("parentId") Integer parentId, HttpServletResponse response) throws IOException {
+    public ResponseEntity<List> getServices(@PathVariable("parentId") Integer parentId, HttpServletResponse response) throws IOException {
         response.setCharacterEncoding("UTF-8");
         List<Service> sosoServicesList = commonDataService.getServicesByParentId(parentId);
-        String servicesListJsonString = JsonConverter.toJson(new JsonMapBuilder()
-                .add("sosoServices", sosoServicesList)
-                .build());
-        response.getWriter().write(servicesListJsonString);
+        return new ResponseEntity<>(sosoServicesList, HttpStatus.OK);
     }
 
 
     @RequestMapping(value = "/appsososervices", method = RequestMethod.GET, produces = {MediaType.APPLICATION_JSON_UTF8_VALUE})
-    public
-    @ResponseBody
-    void getServices(HttpServletResponse response) throws IOException {
+    public ResponseEntity<List> getServices(HttpServletResponse response) throws IOException {
         response.setCharacterEncoding("UTF-8");
         List<Service> sosoServicesList = commonDataService.getServices();
-        String servicesListJsonString = JsonConverter.toJson(new JsonMapBuilder()
-                .add("sosoServices", sosoServicesList)
-                .build());
-        response.getWriter().write(servicesListJsonString);
+        return new ResponseEntity<>(sosoServicesList, HttpStatus.OK);
     }
 
 
     @RequestMapping(value = "/deleteSosoServices/{serviceId}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public void deleteServiceById(@PathVariable("serviceId") Integer serviceId, HttpServletResponse response) throws IOException {
-        commonDataService.deleteSosoService(serviceId);
+    public ResponseEntity<Integer> deleteServiceById(@PathVariable("serviceId") Integer serviceId, HttpServletResponse response) throws IOException {
+       return new ResponseEntity<>(commonDataService.deleteSosoService(serviceId), HttpStatus.OK);
     }
 
     @RequestMapping(value = "/createSosoService", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public void createService(@RequestBody Service service, HttpServletResponse response) throws IOException {
+    public ResponseEntity createService(@RequestBody Service service, HttpServletResponse response,Errors errors,
+                              @RequestHeader(HttpHeaders.ACCEPT_LANGUAGE) String language) throws IOException {
         response.setCharacterEncoding("UTF-8");
-
-        Integer newServiceId = commonDataService.createSosoService(service);
-        if (newServiceId != null) {
-            service.setId(newServiceId);
-            response.getWriter().write(JsonConverter.toJson(new JsonMapBuilder()
-                    .add("service", service)
-                    .build()));
-        } else {
-            response.getWriter().write("Added client's id is NULL. ");
+        serviceValidator.validate(service, language, errors);
+        if(!errors.hasErrors()){
+                Integer newServiceId = commonDataService.createSosoService(service);
+                service.setId(newServiceId);
+                return new ResponseEntity<>(service, HttpStatus.OK);
+        } else{
+            return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
         }
     }
 
     @RequestMapping(value = "/countryCodes", method = RequestMethod.GET)
-    public void loadClassifiersFolRegister(HttpServletResponse response) throws IOException {
+    public ResponseEntity<List> loadClassifiersFolRegister(HttpServletResponse response) throws IOException {
         List<CountryPhoneModel> countryPhoneModelList = commonDataService.getAllCountryCodes();
-        String countryPhoneModelListJsonString = JsonConverter.toJson(new JsonMapBuilder()
-                .add("phoneCodes", countryPhoneModelList)
-                .build());
-
-        response.getWriter().write(countryPhoneModelListJsonString);
+        return new ResponseEntity<>(countryPhoneModelList,HttpStatus.OK);
     }
 
     @RequestMapping(value = "/servicephoto/{serviceId}", method = RequestMethod.GET)
@@ -106,9 +115,9 @@ public class CommonDataController {
     }
 
     @RequestMapping(value = "/service/{serviceId}", method = RequestMethod.GET)
-    public void getServiceById(@PathVariable(value = "serviceId") Integer serviceId, HttpServletResponse response) throws IOException {
+    public ResponseEntity<Service> getServiceById(@PathVariable(value = "serviceId") Integer serviceId, HttpServletResponse response) throws IOException {
         Service service = commonDataService.getServiceById(serviceId);
-        response.getWriter().write(JsonConverter.toJson(service));
+        return new ResponseEntity<>(service, HttpStatus.OK);
     }
 
     @RequestMapping(value = "/commonphoto/{id}", method = RequestMethod.GET)
@@ -166,6 +175,36 @@ public class CommonDataController {
         return null;
 
     }
+
+    @RequestMapping(value = "/systemmessages", method = RequestMethod.GET)
+    public ResponseEntity<List> getMessages(){
+        return new ResponseEntity<>(commonDataService.getMessages(), HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/systemmessage/{id}", method = RequestMethod.GET)
+    public ResponseEntity<MessageDto> getMessageById(@PathVariable(value = "id") Integer id){
+        return new ResponseEntity<>(commonDataService.getMessageById(id), HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/addmessage", method = RequestMethod.POST)
+    public ResponseEntity addMessage(@RequestBody MessageDto messageDto, Errors errors,
+                                     @RequestHeader(HttpHeaders.ACCEPT_LANGUAGE) String language) {
+        messageValidator.validate(messageDto, language, errors);
+        if(!errors.hasErrors()){
+            Integer newMessageId = commonDataService.addMessage(messageDto);
+            messageDto.setId(newMessageId);
+            return new ResponseEntity<>(messageDto, HttpStatus.OK);
+        } else{
+            return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @RequestMapping(value = "/deletesystemmessage/{messageid}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Boolean> deleteMessageById(Integer messageId) {
+        return new ResponseEntity<>(commonDataService.deleteMessageById(messageId), HttpStatus.OK);
+    }
+
+
 
 
     private String getBasePathOfResources() {

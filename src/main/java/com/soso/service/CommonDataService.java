@@ -1,6 +1,8 @@
 package com.soso.service;
 
+import com.soso.cache.MessageCacheImpl;
 import com.soso.models.CountryPhoneModel;
+import com.soso.models.MessageDto;
 import com.soso.models.Service;
 import com.soso.persistance.CommonDataDAO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -18,6 +21,9 @@ public class CommonDataService extends BaseRestClient {
 
     @Autowired
     private CommonDataDAO commonDataDAO;
+
+    @Autowired
+    private MessageCacheImpl messageCache;
 
     @Autowired
     public CommonDataService(@Value("${service.id}") Integer defaultId) {
@@ -32,13 +38,13 @@ public class CommonDataService extends BaseRestClient {
         return commonDataDAO.getServices();
     }
 
-    public void deleteSosoService(Integer serviceId) {
+    public Integer deleteSosoService(Integer serviceId) {
         Service service = commonDataDAO.getServiceById(serviceId);
-        commonDataDAO.deleteService(serviceId);
+        Integer countDeleted = commonDataDAO.deleteService(serviceId);
         if (service.getImgpath() != null) {
             deleteServiceOldLogoFromFiles(getBasePathOfResources() + service.getImgpath());
         }
-
+        return countDeleted;
     }
 
     private String getBasePathOfResources() {
@@ -74,6 +80,28 @@ public class CommonDataService extends BaseRestClient {
         commonDataDAO.updateLogoOfService(serviceId, path);
 
     }
+
+    public List<MessageDto> getMessages(){
+        return (List<MessageDto>)messageCache.loadAll().values();
+    }
+
+    public MessageDto getMessageById(Integer id){
+        return messageCache.getById(id);
+    }
+
+    public Integer addMessage(MessageDto messageDto) {
+        Integer messageId = commonDataDAO.addMessage(messageDto);
+        if(messageId != null){
+            messageDto.setId(messageId);
+            messageCache.put(messageDto);
+        }
+        return messageId;
+    }
+
+    public boolean deleteMessageById(Integer messageId) {
+        return messageCache.remove(messageId);
+    }
+
 
 
 }
