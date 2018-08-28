@@ -1,14 +1,10 @@
 package com.soso.controller;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.stream.JsonReader;
 import com.soso.models.CountryPhoneModel;
 import com.soso.models.MessageDto;
 import com.soso.models.Service;
 import com.soso.service.CommonDataService;
 import com.soso.service.JsonConverter;
-import com.soso.service.JsonMapBuilder;
 import com.soso.validator.MessageValidator;
 import com.soso.validator.ServiceValidator;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
@@ -22,15 +18,16 @@ import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import sun.plugin2.message.Message;
 
 import javax.annotation.PostConstruct;
 import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletResponse;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 
 /**
  * Created by Garik Kalashyan on 3/4/2017.
@@ -59,12 +56,14 @@ public class CommonDataController {
     }
 
     @PostConstruct
-    public void init(){
-      serviceValidator.setCommonDataService(commonDataService);
+    public void init() {
+        serviceValidator.setCommonDataService(commonDataService);
     }
 
     @RequestMapping(value = "/getSosoServices/{parentId}", method = RequestMethod.GET, produces = {MediaType.APPLICATION_JSON_UTF8_VALUE})
-    public ResponseEntity<List> getServices(@PathVariable("parentId") Integer parentId, HttpServletResponse response) throws IOException {
+    public ResponseEntity<List> getServices(@PathVariable("parentId") Integer parentId,
+                                            @RequestHeader(HttpHeaders.ACCEPT_LANGUAGE) String language,
+                                            HttpServletResponse response) throws IOException {
         response.setCharacterEncoding("UTF-8");
         List<Service> sosoServicesList = commonDataService.getServicesByParentId(parentId);
         return new ResponseEntity<>(sosoServicesList, HttpStatus.OK);
@@ -80,37 +79,44 @@ public class CommonDataController {
 
 
     @RequestMapping(value = "/deleteSosoServices/{serviceId}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Integer> deleteServiceById(@PathVariable("serviceId") Integer serviceId, HttpServletResponse response) throws IOException {
-       return new ResponseEntity<>(commonDataService.deleteSosoService(serviceId), HttpStatus.OK);
+    public ResponseEntity<Boolean> deleteServiceById(@PathVariable("serviceId") Integer serviceId, HttpServletResponse response) throws IOException {
+        return new ResponseEntity<>(commonDataService.deleteSosoService(serviceId), HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/createSosoService", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity createService(@RequestBody Service service, HttpServletResponse response,Errors errors,
-                              @RequestHeader(HttpHeaders.ACCEPT_LANGUAGE) String language) throws IOException {
+    @RequestMapping(value = "/createSosoService", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public ResponseEntity createService(@RequestBody Service service, @RequestHeader(HttpHeaders.ACCEPT_LANGUAGE) String language,
+                                        HttpServletResponse response, Errors errors) throws IOException {
         response.setCharacterEncoding("UTF-8");
         serviceValidator.validate(service, language, errors);
-        if(!errors.hasErrors()){
-                Integer newServiceId = commonDataService.createSosoService(service);
-                service.setId(newServiceId);
-                return new ResponseEntity<>(service, HttpStatus.OK);
-        } else{
-            return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+        if (!errors.hasErrors()) {
+            Integer newServiceId = commonDataService.createSosoService(service);
+            service.setId(newServiceId);
+            return new ResponseEntity<>(service, HttpStatus.OK);
+        } else {
+            Map<String, String> errorsMap = new HashMap<>();
+            errors.getAllErrors().forEach(objectError -> {
+                errorsMap.put(objectError.getObjectName(), objectError.getDefaultMessage());
+            });
+            return new ResponseEntity<>(errorsMap, HttpStatus.PARTIAL_CONTENT);
         }
     }
 
     @RequestMapping(value = "/countryCodes", method = RequestMethod.GET)
     public ResponseEntity<List> loadClassifiersFolRegister(HttpServletResponse response) throws IOException {
         List<CountryPhoneModel> countryPhoneModelList = commonDataService.getAllCountryCodes();
-        return new ResponseEntity<>(countryPhoneModelList,HttpStatus.OK);
+        return new ResponseEntity<>(countryPhoneModelList, HttpStatus.OK);
     }
 
     @RequestMapping(value = "/servicephoto/{serviceId}", method = RequestMethod.GET)
-    public void getPhotoById(@PathVariable(value = "serviceId") Integer serviceId, HttpServletResponse response) throws IOException {
+    public void getPhotoById(@PathVariable(value = "serviceId") Integer serviceId,@RequestHeader(HttpHeaders.ACCEPT_LANGUAGE) String language ,HttpServletResponse response) throws IOException {
         String imgPath = commonDataService.getImgPathOfService(serviceId);
-        response.setContentType(MediaType.IMAGE_JPEG_VALUE);
-        response.setContentType(MediaType.IMAGE_PNG_VALUE);
-        if (imgPath != null && getImageInputStreamByImgPath(getBasePathOfResources() + imgPath) != null) {
-            IOUtils.copy(getImageInputStreamByImgPath(getBasePathOfResources() + imgPath), response.getOutputStream());
+        InputStream imageStream = imgPath != null ? getImageInputStreamByImgPath(getBasePathOfResources() + imgPath) : null;
+        if (imageStream != null) {
+            response.setContentType(MediaType.IMAGE_JPEG_VALUE);
+            response.setContentType(MediaType.IMAGE_PNG_VALUE);
+            IOUtils.copy(imageStream, response.getOutputStream());
+        }else {
+            putMessageIntoResponseByGlobkey("invalidphoto", language, response);
         }
     }
 
@@ -121,12 +127,17 @@ public class CommonDataController {
     }
 
     @RequestMapping(value = "/commonphoto/{id}", method = RequestMethod.GET)
-    public void getCommonPhotoById(@PathVariable(value = "id") Integer id, HttpServletResponse response) throws IOException {
+    public void getCommonPhotoById(@PathVariable(value = "id") Integer id,@RequestHeader(HttpHeaders.ACCEPT_LANGUAGE) String language ,HttpServletResponse response) throws IOException {
         String imgPath = commonDataService.getImgPathWithId(id);
-        response.setContentType(MediaType.IMAGE_GIF_VALUE);
-        response.setContentType(MediaType.IMAGE_JPEG_VALUE);
-        response.setContentType(MediaType.IMAGE_PNG_VALUE);
-        IOUtils.copy(getImageInputStreamByImgPath(getBasePathOfResources() + imgPath), response.getOutputStream());
+        InputStream imageStream = imgPath != null ? getImageInputStreamByImgPath(getBasePathOfResources() + imgPath) : null;
+        if (imageStream != null) {
+            response.setContentType(MediaType.IMAGE_GIF_VALUE);
+            response.setContentType(MediaType.IMAGE_JPEG_VALUE);
+            response.setContentType(MediaType.IMAGE_PNG_VALUE);
+            IOUtils.copy(imageStream, response.getOutputStream());
+        } else {
+            putMessageIntoResponseByGlobkey("invalidphoto", language, response);
+        }
     }
 
     @RequestMapping(value = "/uploadserviceimage", method = RequestMethod.POST, consumes = {"multipart/mixed", "multipart/form-data"})
@@ -168,7 +179,7 @@ public class CommonDataController {
             ImageIO.write(image, "jpg", os);
             return new ByteArrayInputStream(os.toByteArray());
         } catch (IOException e) {
-            IOException ex = new IOException("There is problem with reading file"+ imagePath);
+            IOException ex = new IOException("There is problem with reading file " + imagePath);
             ex.initCause(e);
             ex.printStackTrace();
         }
@@ -177,39 +188,78 @@ public class CommonDataController {
     }
 
     @RequestMapping(value = "/systemmessages", method = RequestMethod.GET)
-    public ResponseEntity<List> getMessages(){
+    public ResponseEntity<List> getMessages() {
         return new ResponseEntity<>(commonDataService.getMessages(), HttpStatus.OK);
     }
 
     @RequestMapping(value = "/systemmessage/{id}", method = RequestMethod.GET)
-    public ResponseEntity<MessageDto> getMessageById(@PathVariable(value = "id") Integer id){
+    public ResponseEntity<MessageDto> getMessageDtoById(@PathVariable(value = "id") Integer id) {
         return new ResponseEntity<>(commonDataService.getMessageById(id), HttpStatus.OK);
     }
+
+
+    @RequestMapping(value = "/systemmessagebykey/{key}", method = RequestMethod.GET)
+    public ResponseEntity<MessageDto> getMessageDtoByGlobKey(@PathVariable(value = "key") String key) {
+        return new ResponseEntity<>(commonDataService.getMessageByGlobkey(key), HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/message/{id}", method = RequestMethod.GET)
+    public ResponseEntity<String> getMessageById(@RequestHeader(HttpHeaders.ACCEPT_LANGUAGE) String language, @PathVariable(value = "id") Integer id) {
+        MessageDto messageDto = commonDataService.getMessageById(id);
+        String message = language.compareToIgnoreCase("hay") == 0 ? messageDto.getHay() : messageDto.getEng();
+        return new ResponseEntity<>(message, HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/messagebykey/{key}", method = RequestMethod.GET)
+        public ResponseEntity<String> getMessageByGlobkey(@RequestHeader(HttpHeaders.ACCEPT_LANGUAGE) String language, @PathVariable(value = "key") String key) {
+            MessageDto messageDto = commonDataService.getMessageByGlobkey(key);
+            String message = language.compareToIgnoreCase("hay") == 0 ? messageDto.getHay() : messageDto.getEng();
+            return new ResponseEntity<>(message, HttpStatus.OK);
+        }
 
     @RequestMapping(value = "/addmessage", method = RequestMethod.POST)
     public ResponseEntity addMessage(@RequestBody MessageDto messageDto, Errors errors,
                                      @RequestHeader(HttpHeaders.ACCEPT_LANGUAGE) String language) {
         messageValidator.validate(messageDto, language, errors);
-        if(!errors.hasErrors()){
+        if (!errors.hasErrors()) {
             Integer newMessageId = commonDataService.addMessage(messageDto);
             messageDto.setId(newMessageId);
             return new ResponseEntity<>(messageDto, HttpStatus.OK);
-        } else{
-            return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+        } else {
+            Map<String, String> errorsMap =  new HashMap<>();
+            errors.getAllErrors().forEach(objectError -> {
+                errorsMap.put(objectError.getObjectName(), objectError.getDefaultMessage());
+            });
+            return new ResponseEntity<>(errorsMap, HttpStatus.PARTIAL_CONTENT);
         }
     }
 
     @RequestMapping(value = "/deletesystemmessage/{messageid}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Boolean> deleteMessageById(Integer messageId) {
+    public ResponseEntity<Boolean> deleteMessageById(@PathVariable("messageid") Integer messageId) {
         return new ResponseEntity<>(commonDataService.deleteMessageById(messageId), HttpStatus.OK);
     }
-
-
 
 
     private String getBasePathOfResources() {
         return new File(".").getAbsoluteFile().getParentFile().getPath();
     }
+
+    private void putMessageIntoResponseByGlobkey(String globkey, String language, HttpServletResponse response){
+            MessageDto messageDto = commonDataService.getMessageByGlobkey("invalidphoto");
+            Map<String, String> errors = new HashMap<>();
+            if (language.compareToIgnoreCase("hay") == 0) {
+                errors.put("invalidphoto", messageDto.getHay());
+            } else if (language.compareToIgnoreCase("eng") == 0) {
+                errors.put("invalidphoto", messageDto.getEng());
+            }
+        try {
+            response.getWriter().write(JsonConverter.toJson(errors));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        response.setStatus(HttpStatus.BAD_REQUEST.value());
+
+        }
 
 
 }

@@ -7,6 +7,7 @@ public class MessageDto {
     private Integer id;
     private String eng;
     private String hay;
+    private String globkey;
 
     public MessageDto() {
     }
@@ -33,5 +34,13 @@ public class MessageDto {
 
     public void setHay(String hay) {
         this.hay = hay;
+    }
+
+    public String getGlobkey() {
+        return globkey;
+    }
+
+    public void setGlobkey(String globkey) {
+        this.globkey = globkey;
     }
 }

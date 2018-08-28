@@ -4,6 +4,7 @@ import com.soso.models.CountryPhoneModel;
 import com.soso.models.MessageDto;
 import com.soso.models.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.stereotype.Repository;
@@ -39,12 +40,16 @@ public class CommonDataDAO {
         return getNamedParameterJdbcOperations().queryForObject(createUserQuery, paramMap, Integer.class);
     }
 
-    public Integer deleteService(Integer serviceId) {
-        String deleteServiceQuery = "SELECT deleteservice ( :_serviceId)";
-        Map<String, Object> paramMap = new HashMap<>();
-        paramMap.put("_serviceId", serviceId);
-        return getNamedParameterJdbcOperations().queryForObject(deleteServiceQuery, paramMap, Integer.class);
-
+    public boolean deleteServiceWithSubServices(Integer serviceId) {
+        try {
+            String deleteServiceQuery = "SELECT deleteservice ( :_serviceId)";
+            Map<String, Object> paramMap = new HashMap<>();
+            paramMap.put("_serviceId", serviceId);
+            getNamedParameterJdbcOperations().update(deleteServiceQuery, paramMap);
+            return true;
+        }catch (EmptyResultDataAccessException e){
+            return false;
+        }
     }
 
 
@@ -92,24 +97,33 @@ public class CommonDataDAO {
     }
 
     public String getImgPathOfService(Integer serviceId) {
-        Map<String, Object> paramMap = new HashMap<>();
-        paramMap.put("serviceid", serviceId);
-        return getNamedParameterJdbcOperations().queryForObject("SELECT imgpath FROM c_service WHERE id=:serviceid", paramMap, String.class);
-
+       try {
+           Map<String, Object> paramMap = new HashMap<>();
+           paramMap.put("serviceid", serviceId);
+           return getNamedParameterJdbcOperations().queryForObject("SELECT imgpath FROM c_service WHERE id=:serviceid", paramMap, String.class);
+       }catch (EmptyResultDataAccessException ex){
+           return null;
+       }
     }
 
     public String getImgPathWithId(Integer id) {
-        Map<String, Object> paramMap = new HashMap<>();
-        paramMap.put("id", id);
-        return getNamedParameterJdbcOperations().queryForObject("SELECT path FROM c_commonimages WHERE id=:id", paramMap, String.class);
-
+        try {
+            Map<String, Object> paramMap = new HashMap<>();
+            paramMap.put("id", id);
+            return getNamedParameterJdbcOperations().queryForObject("SELECT path FROM c_commonimages WHERE id=:id", paramMap, String.class);
+        }catch (EmptyResultDataAccessException e){
+            return null;
+        }
     }
 
     public Service getServiceById(Integer serviceId) {
-        Map<String, Object> params = new HashMap<>();
-        params.put("_id", serviceId);
-        return getNamedParameterJdbcOperations().queryForObject(GET_SERVICE_BY_ID, params, new BeanPropertyRowMapper<>(Service.class));
-
+        try {
+            Map<String, Object> params = new HashMap<>();
+            params.put("_id", serviceId);
+            return getNamedParameterJdbcOperations().queryForObject(GET_SERVICE_BY_ID, params, new BeanPropertyRowMapper<>(Service.class));
+        }catch (EmptyResultDataAccessException e){
+            return null;
+        }
     }
 
     public void updateLogoOfService(Integer serviceId, String path) {
@@ -117,7 +131,6 @@ public class CommonDataDAO {
         paramMap.put("id", serviceId);
         paramMap.put("imgpath", path);
         getNamedParameterJdbcOperations().update(UPDATE_LOGO_SRC_PATH_OF_SERVICE_QUERY, paramMap);
-
 
     }
 

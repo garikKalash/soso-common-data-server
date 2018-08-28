@@ -1,16 +1,20 @@
 package com.soso.service;
 
+import com.soso.cache.Cache;
 import com.soso.cache.MessageCacheImpl;
 import com.soso.models.CountryPhoneModel;
 import com.soso.models.MessageDto;
 import com.soso.models.Service;
 import com.soso.persistance.CommonDataDAO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -30,6 +34,7 @@ public class CommonDataService extends BaseRestClient {
         super(defaultId);
     }
 
+
     public List<Service> getServicesByParentId(Integer parentId) {
         return commonDataDAO.getServicesByParent(parentId);
     }
@@ -38,13 +43,16 @@ public class CommonDataService extends BaseRestClient {
         return commonDataDAO.getServices();
     }
 
-    public Integer deleteSosoService(Integer serviceId) {
+    public boolean deleteSosoService(Integer serviceId) {
         Service service = commonDataDAO.getServiceById(serviceId);
-        Integer countDeleted = commonDataDAO.deleteService(serviceId);
-        if (service.getImgpath() != null) {
-            deleteServiceOldLogoFromFiles(getBasePathOfResources() + service.getImgpath());
+        boolean isDeleted = false;
+        if(service != null){
+            isDeleted = commonDataDAO.deleteServiceWithSubServices(serviceId);
+            if (service.getImgpath() != null) {
+                return isDeleted && deleteServiceOldLogoFromFiles(getBasePathOfResources() + service.getImgpath());
+            }
         }
-        return countDeleted;
+        return isDeleted;
     }
 
     private String getBasePathOfResources() {
@@ -82,12 +90,15 @@ public class CommonDataService extends BaseRestClient {
     }
 
     public List<MessageDto> getMessages(){
-        return (List<MessageDto>)messageCache.loadAll().values();
+        List<MessageDto> messageDtos = new ArrayList<>();
+        messageDtos.addAll(messageCache.loadAll().values());
+        return messageDtos;
     }
 
     public MessageDto getMessageById(Integer id){
         return messageCache.getById(id);
     }
+
 
     public Integer addMessage(MessageDto messageDto) {
         Integer messageId = commonDataDAO.addMessage(messageDto);
@@ -99,7 +110,14 @@ public class CommonDataService extends BaseRestClient {
     }
 
     public boolean deleteMessageById(Integer messageId) {
-        return messageCache.remove(messageId);
+        if(commonDataDAO.deleteMessageById(messageId) != null){
+          return messageCache.remove(messageId);
+        }
+        return false;
+    }
+
+    public MessageDto getMessageByGlobkey(String globkey){
+        return messageCache.getByGlobkey(globkey);
     }
 
 
