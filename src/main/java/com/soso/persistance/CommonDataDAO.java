@@ -65,7 +65,10 @@ public class CommonDataDAO {
     }
 
     public List<MessageDto> getMessages(){
-        return getNamedParameterJdbcOperations().query("SELECT * FROM public.c_messages",new BeanPropertyRowMapper<>(MessageDto.class));
+        List<MessageDto> messageDtos = getNamedParameterJdbcOperations().query("SELECT * FROM public.c_messages",new BeanPropertyRowMapper<>(MessageDto.class));
+        List<MessageDto> serviceNames = getNamedParameterJdbcOperations().query("SELECT * FROM public.c_service", new BeanPropertyRowMapper<>(MessageDto.class));
+        messageDtos.addAll(serviceNames);
+        return messageDtos;
     }
 
     public MessageDto getMessageById(Integer id){
