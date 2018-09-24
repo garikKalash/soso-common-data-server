@@ -2,13 +2,11 @@ package com.soso.validator;
 
 import com.soso.models.MessageDto;
 import com.soso.service.CommonDataService;
-import com.sun.istack.internal.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 
-import java.util.HashMap;
-import java.util.Map;
+import javax.validation.constraints.NotNull;
 
 /**
  * Created by Garik Kalashyan on 22-Feb-18.

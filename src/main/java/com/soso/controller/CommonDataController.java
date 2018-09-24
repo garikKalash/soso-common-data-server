@@ -108,7 +108,7 @@ public class CommonDataController {
     }
 
     @RequestMapping(value = "/servicephoto/{serviceId}", method = RequestMethod.GET)
-    public void getPhotoById(@PathVariable(value = "serviceId") Integer serviceId,@RequestHeader(HttpHeaders.ACCEPT_LANGUAGE) String language ,HttpServletResponse response) throws IOException {
+    public void getPhotoById(@PathVariable(value = "serviceId") Integer serviceId ,@RequestHeader(HttpHeaders.ACCEPT_LANGUAGE) String language ,HttpServletResponse response) throws IOException {
         String imgPath = commonDataService.getImgPathOfService(serviceId);
         InputStream imageStream = imgPath != null ? getImageInputStreamByImgPath(getBasePathOfResources() + imgPath) : null;
         if (imageStream != null) {
@@ -188,6 +188,7 @@ public class CommonDataController {
     }
 
     @RequestMapping(value = "/systemmessages", method = RequestMethod.GET)
+    @ResponseBody
     public ResponseEntity<List> getMessages() {
         return new ResponseEntity<>(commonDataService.getMessages(), HttpStatus.OK);
     }

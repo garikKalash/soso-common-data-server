@@ -6,22 +6,30 @@ package com.soso.models;
 public class Service {
     private Integer id;
 
-    private String serviceName_arm;
+    private String hay;
 
-    private String serviceName_eng;
+    private String eng;
 
     private String imgpath;
 
     private Integer parentid;
 
+    private String globkey;
+
     public Service(){}
 
-    public Service(Integer id, String serviceName_arm, String serviceName_eng,String imgpath,Integer parentid) {
+    public Service(Integer id,
+                   String serviceName_arm,
+                   String eng,
+                   String imgpath,
+                   Integer parentid,
+                   String globkey) {
         this.id = id;
-        this.serviceName_arm = serviceName_arm;
-        this.serviceName_eng = serviceName_eng;
+        this.hay = serviceName_arm;
+        this.eng = eng;
         this.imgpath = imgpath;
         this.parentid = parentid;
+        this.globkey = globkey;
     }
 
 
@@ -41,20 +49,20 @@ public class Service {
         this.parentid = parentid;
     }
 
-    public String getServiceName_arm() {
-        return serviceName_arm;
+    public String getHay() {
+        return hay;
     }
 
-    public void setServiceName_arm(String serviceName_arm) {
-        this.serviceName_arm = serviceName_arm;
+    public void setHay(String hay) {
+        this.hay = hay;
     }
 
-    public String getServiceName_eng() {
-        return serviceName_eng;
+    public String getEng() {
+        return eng;
     }
 
-    public void setServiceName_eng(String serviceName_eng) {
-        this.serviceName_eng = serviceName_eng;
+    public void setEng(String eng) {
+        this.eng = eng;
     }
 
     public String getImgpath() {
@@ -63,5 +71,13 @@ public class Service {
 
     public void setImgpath(String imgpath) {
         this.imgpath = imgpath;
+    }
+
+    public String getGlobkey() {
+        return globkey;
+    }
+
+    public void setGlobkey(String globkey) {
+        this.globkey = globkey;
     }
 }
